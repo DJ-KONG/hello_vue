@@ -8,6 +8,7 @@ import customerList from '../components/Pages/collectLocation/collectLocation';
 Vue.use(Router);
 
 export default new Router({
+  // mode:'history',
   routes: [
     {
       path: '/',

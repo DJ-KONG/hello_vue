@@ -1,6 +1,5 @@
 <template>
   <div class="dutyList">
-    <p>{{DTKconfig}}</p>
     <div>
       <mt-tab-container v-model="active">
         <mt-tab-container-item id="list">
@@ -28,7 +27,9 @@
           </mt-search>
         </mt-tab-container-item>
         <mt-tab-container-item id="map">
-          <span>这里放地图</span>
+          <div class="amap-wrapper">
+            <el-amap class="amap-box" :vid="'amap-vue'"></el-amap>
+          </div>
         </mt-tab-container-item>
       </mt-tab-container>
     </div>
@@ -53,6 +54,7 @@ import ddTalk from 'dingtalk-javascript-sdk' ;
 import ddtools from '@/components/common/DDTools' ;
 import axios from 'axios' ;
 import config from '@/config';
+import { authInfo,getConfig } from '@/components/common/DDTools' ;
 
 import location_icon from "assets/icon/list_icon.png" ;
 
@@ -60,18 +62,14 @@ const today = new Date();
 
 export default {
   mounted() {
-      this.dtkConfigInit() ;
-//      this.DTKconfig ='12121' ;
+    this.dtkConfigInit();
   },
   data() {
     return {
       active: 'list' ,
       value:'' ,
       DTKconfig: [],
-      apilist:   [ 'runtime.info', 'biz.contact.choose',
-       'device.notification.confirm', 'device.notification.alert',
-       'device.notification.prompt', 'biz.ding.post',
-       'biz.util.openLink','util.domainStorage.setItem' ],
+      apilist:   [ 'biz.map.locate','device.geolocation.get' ],
       defaultResult: [
         {name: '张三'} ,
         {name: 'Banana'} ,
@@ -94,7 +92,11 @@ export default {
         {
           content: '定位',
           style: { background: '#3294ff', border: '1px solid #FFF', color: '#fff' },
-          handler: () => Toast('打开地图去定位') ,
+          handler: () =>{
+            this.getLocation((data)=>{
+              this.openMap(data);
+            })
+          } ,
         }
       ]
     };
@@ -107,25 +109,98 @@ export default {
   },
   methods:{
     dtkConfigInit(){
-//          ddTalk.ready(function(){
-//      const dd = ddTalk.apis;
-//      // 设置导航
-//      dd.biz.navigation.setTitle({
-//        title: '客户信息'
-//      });
-//    });
-//    console.log(window.location.href);
-      axios.get(`${config.serverURL}/getConfig`,{
-        params:{
-          signedUrl:window.location.href,
-        }
-      }).then((response) => {
-         // console.log(`[${response.data}]`) ;
-          this.DTKconfig =response.data ;
-        })
-        .catch(function(err){
-          console.log(err);
+      authInfo((data) => {
+        this.DTKconfig = data.data;
+        getConfig(this.DTKconfig,this.apilist,(data)=>{
+          ddTalk.ready(function(){
+            const dd = ddTalk.apis;
+            // 设置导航
+            dd.biz.navigation.setTitle({
+              title: '客户信息'
+            });
+          });
         });
+      })
+
+    },
+    getLocation(callbacks){
+      ddTalk.ready(function(){
+        const dd = ddTalk.apis;
+        //获取位置坐标
+        dd.device.geolocation.get({
+          targetAccuracy : 200,
+          coordinate : 1,
+          withReGeocode : true,
+          useCache:false, //默认是true，如果需要频繁获取地理位置，请设置false
+          onSuccess : function(result) {
+            /* 高德坐标 result 结构
+        {
+            longitude : Number, // POI的经度
+            latitude : Number,// POI的纬度
+            accuracy : Number,
+            address : String,
+            province : String,
+            city : String,
+            district : String,
+            road : String,
+            netType : String,
+            operatorType : String,
+            errorMessage : String,
+            errorCode : Number,
+            isWifiEnabled : Boolean,
+            isGpsEnabled : Boolean,
+            isFromMock : Boolean,
+            provider : wifi|lbs|gps,
+            accuracy : Number,
+            isMobileEnabled : Boolean
+        }
+        */
+            let addrList = [];
+            addrList.push(result);
+            if (typeof callbacks === 'function') {
+              callbacks(addrList)
+            }
+          },
+          onFail : function(err) {
+            Toast(JSON.stringify(err));
+            console.log(JSON.stringify(err));
+          }
+        });
+      });
+    },
+    openMap(addrList){
+      console.log(addrList);
+      let longitude = addrList[0].longitude;
+      let latitude = addrList[0].latitude;
+      console.log(longitude,latitude);
+      ddTalk.ready(function(){
+      const dd = ddTalk.apis;
+      dd.biz.map.locate({
+        latitude: latitude, // 纬度
+        longitude: longitude, // 经度
+        onSuccess: function (result) {
+          /* result 结构
+          {
+            province: 'xxx', // POI所在省会
+              provinceCode: 'xxx', // POI所在省会编码
+            city: 'xxx', // POI所在城市
+            cityCode: 'xxx', // POI所在城市
+            adName: 'xxx', // POI所在区名称
+            adCode: 'xxx', // POI所在区编码
+            distance: 'xxx', // POI与设备位置的距离
+            postCode: 'xxx', // POI的邮编
+            snippet: 'xxx', // POI的街道地址
+            title: 'xxx', // POI的名称
+            latitude: 39.903578, // POI的纬度
+            longitude: 116.473565, // POI的经度
+          } */
+          console.log(result);
+        },
+        onFail: function (err) {
+          console.log(err);
+        }
+      });
+    });
     }
   }
 };
