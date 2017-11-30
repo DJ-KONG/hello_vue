@@ -1,30 +1,31 @@
 <template>
-  <div>
-    <h3 class="title">{{ msg }}</h3>
-    <div class="amap-wrapper">
-      <el-amap vid="amapDemo"
-               :center="center"
-               :map-manager="amapManager"
-               :zoom="zoom"
-               :events="events" class="amap-demo">
-      </el-amap>
-    </div>
-    <!--<mt-cell class="listCell"-->
-      <!--title="标题文字"-->
-      <!--to="//github.com"-->
-      <!--is-link-->
-      <!--value="带链接">-->
-    <!--</mt-cell>-->
-    <div>
-    <mt-picker :slots="slots" @change="onValuesChange"  ></mt-picker>
-    </div>
+  <div >
+    <el-amap ref="map" vid="Demo"
+             :amap-manager="amapManager"
+             :center="center"
+             :zoom="zoom"
+             :plugin="plugin"
+             class="demo">
+    </el-amap>
+    <!--<el-amap vid="amapDemo"-->
+             <!--:center="center"-->
+             <!--:map-manager="amapManager"-->
+             <!--:zoom="zoom"-->
+             <!--:events="events" class="amap-demo">-->
+    <!--</el-amap>-->
   </div>
 </template>
+
+<style scoped>
+  .demo {
+    height: 300px;
+  }
+</style>
 
 <script>
   import address from '../../static/json/address2.json';
   import { Toast } from 'mint-ui';
-
+  import VueAMap from 'vue-amap';
   let amapManager = new VueAMap.AMapManager();
   export default {
     methods: {
@@ -73,8 +74,3 @@
     },
   };
 </script>
-<style scoped>
-  .amap-demo {
-    height: 300px;
-  }
-</style>

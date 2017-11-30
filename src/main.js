@@ -13,7 +13,7 @@ VueAMap.initAMapApiLoader({
   plugin: ['AMap.Autocomplete', 'AMap.PlaceSearch',
     'AMap.Scale', 'AMap.OverView', 'AMap.ToolBar',
     'AMap.MapType', 'AMap.PolyEditor', 'AMap.CircleEditor'],
-  uiVersion: '1.0.11'
+  uiVersion: '1.0'
 });
 Vue.config.productionTip = false;
 

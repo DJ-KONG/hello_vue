@@ -27,8 +27,13 @@
           </mt-search>
         </mt-tab-container-item>
         <mt-tab-container-item id="map">
-          <div class="amap-wrapper">
-            <el-amap class="amap-box" :vid="'amap-vue'"></el-amap>
+          <div class="mapView">
+          <el-amap vid="amapDemo"
+                   :center="center"
+                   :map-manager="amapManager"
+                   :zoom="zoom"
+                   :events="events" class="amap-demo">
+          </el-amap>
           </div>
         </mt-tab-container-item>
       </mt-tab-container>
@@ -53,12 +58,15 @@ import { Toast } from 'mint-ui' ;
 import ddTalk from 'dingtalk-javascript-sdk' ;
 import ddtools from '@/components/common/DDTools' ;
 import axios from 'axios' ;
+import VueAMap from 'vue-amap';
 import config from '@/config';
 import { authInfo,getConfig } from '@/components/common/DDTools' ;
 
 import location_icon from "assets/icon/list_icon.png" ;
 
 const today = new Date();
+
+let amapManager = new VueAMap.AMapManager();
 
 export default {
   mounted() {
@@ -98,7 +106,24 @@ export default {
             })
           } ,
         }
-      ]
+      ],
+      //*****************************************高德地图参数start
+      zoom: 12,
+      center: [121.59996, 31.197646],
+      amapManager,
+      events: {
+        init(map) {
+          AMapUI.loadUI(['overlay/SimpleMarker'], function(SimpleMarker) {
+            const marker = new SimpleMarker({
+              iconLabel: 'A',
+              iconStyle: 'red',
+              map: map,
+              position: map.getCenter()
+            });
+          });
+        }
+      }
+      //**********************************************高德地图参数end
     };
   },
   computed: {
@@ -214,5 +239,10 @@ export default {
   margin: 5px;
   padding: 5px;
   }
+.mapView {
+  background-color: brown;
+  height: 300px;
+  padding: 0;
+}
 
 </style>
