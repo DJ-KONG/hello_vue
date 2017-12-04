@@ -32,6 +32,7 @@
                    :center="center"
                    :map-manager="amapManager"
                    :zoom="zoom"
+                   :plugin="plugin"
                    :events="events" class="amap-demo">
           </el-amap>
           </div>
@@ -61,6 +62,7 @@ import axios from 'axios' ;
 import VueAMap from 'vue-amap';
 import config from '@/config';
 import { authInfo,getConfig } from '@/components/common/DDTools' ;
+import city from '@/components/common/city' ;
 
 import location_icon from "assets/icon/list_icon.png" ;
 
@@ -70,7 +72,8 @@ let amapManager = new VueAMap.AMapManager();
 
 export default {
   mounted() {
-    this.dtkConfigInit();
+    // this.dtkConfigInit();
+    this.getCustomer();
   },
   data() {
     return {
@@ -79,22 +82,22 @@ export default {
       DTKconfig: [],
       apilist:   [ 'biz.map.locate','device.geolocation.get' ],
       defaultResult: [
-        {name: '张三'} ,
-        {name: 'Banana'} ,
-        {name: 'Orange'} ,
-        {name: 'Durian'} ,
-        {name: 'Lemon'} ,
-        {name: 'Peach'} ,
-        {name: 'Cherry'} ,
-        {name: 'Berry'} ,
-        {name: 'Core'} ,
-        {name: 'Fig'} ,
-        {name: 'Haw'} ,
-        {name: 'Melon'} ,
-        {name: 'Plum'} ,
-        {name: 'Pear'} ,
-        {name: 'Peanut'} ,
-        {name: 'Other'} ,
+        {name: '张三',lnglat: [116.405285, 39.904989]} ,
+        {name: 'Banana',lnglat: [116.505285, 39.904989]} ,
+        {name: 'Orange',lnglat: [116.605285, 39.904989]} ,
+        {name: 'Durian',lnglat: [116.705285, 39.904989]} ,
+        {name: 'Lemon',lnglat: [116.805285, 39.904989]} ,
+        {name: 'Peach',lnglat: [116.905285, 39.904989]} ,
+        {name: 'Cherry',lnglat: [116.405285, 39.904989]} ,
+        {name: 'Berry',lnglat: [116.305285, 39.904989]} ,
+        {name: 'Core',lnglat: [116.205285, 39.904989]} ,
+        {name: 'Fig',lnglat: [116.105285, 39.904989]} ,
+        {name: 'Haw',lnglat: [116.605285, 39.804989]} ,
+        {name: 'Melon',lnglat: [116.605285, 39.704989]} ,
+        {name: 'Plum',lnglat: [116.605285, 39.604989]} ,
+        {name: 'Pear',lnglat: [116.605285, 39.504989]} ,
+        {name: 'Peanut',lnglat: [116.605285, 39.404989]} ,
+        {name: 'Other',lnglat: [116.605285, 39.304989]} ,
       ] ,
       rightValue:[
         {
@@ -109,20 +112,43 @@ export default {
       ],
       //*****************************************高德地图参数start
       zoom: 12,
-      center: [121.59996, 31.197646],
+      center: [116.405285, 39.904989],
       amapManager,
       events: {
         init(map) {
-          AMapUI.loadUI(['overlay/SimpleMarker'], function(SimpleMarker) {
-            const marker = new SimpleMarker({
-              iconLabel: 'A',
-              iconStyle: 'red',
-              map: map,
-              position: map.getCenter()
-            });
+          let style = [{
+            url: 'http://a.amap.com/jsapi_demos/static/images/mass0.png',
+            anchor: new AMap.Pixel(6, 6),
+            size: new AMap.Size(11, 11)
+          },{
+            url: 'http://a.amap.com/jsapi_demos/static/images/mass1.png',
+            anchor: new AMap.Pixel(4, 4),
+            size: new AMap.Size(7, 7)
+          },{
+            url: 'http://a.amap.com/jsapi_demos/static/images/mass2.png',
+            anchor: new AMap.Pixel(200, 200),
+            size: new AMap.Size(5, 5)
+          }
+          ];
+
+          let mass = new AMap.MassMarks(city.city,{
+            opacity:0.8,
+            zIndex: 111,
+            cursor:'pointer',
+            style:style
           });
+          let marker = new AMap.Marker({content:' ',map:map})
+          mass.on('mouseover',function(e){
+            marker.setPosition(e.data.lnglat);
+            marker.setLabel({content:e.data.name})
+          })
+          mass.setMap(map);
         }
-      }
+      },
+      plugin: [ 'ToolBar',{
+        pName: 'MapType',
+        defaultType: 0,
+      }],
       //**********************************************高德地图参数end
     };
   },
@@ -204,6 +230,7 @@ export default {
         latitude: latitude, // 纬度
         longitude: longitude, // 经度
         onSuccess: function (result) {
+          Toast(result.adName+result.snippet);
           /* result 结构
           {
             province: 'xxx', // POI所在省会
@@ -226,7 +253,21 @@ export default {
         }
       });
     });
-    }
+    },
+    getCustomer(){
+      axios.get(`${config.serverURL}/Customer`,{
+        params:{
+          zone:window.location.href.split('#')[0],   //鉴权时，只对#号之前url进行鉴权，服务端验权时只验证#号之前
+        }
+      }).then((response) => {
+        if (typeof callback === 'function') {
+          callback(response)
+        }
+      }).catch(function(err){
+        console.log(err);
+        return err;
+      });
+}
   }
 };
 </script>
