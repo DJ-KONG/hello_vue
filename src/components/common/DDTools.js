@@ -20,7 +20,7 @@ export function getConfig(_config,apilist,callback){
   }
     };
     export function authInfo(callback){
-      axios.get(`${config.serverURL}/getConfig`,{
+      axios.get(`${config.neusoftURL}/getConfig`,{
         params:{
           signedUrl:window.location.href.split('#')[0],   //鉴权时，只对#号之前url进行鉴权，服务端验权时只验证#号之前
         }

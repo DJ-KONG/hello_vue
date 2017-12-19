@@ -47,7 +47,7 @@ export default {
         {
           icon: 'radio.png',
           name: '电台',
-          route: 'radio',
+          route: 'HelloWorld',
         },
       ],
     };

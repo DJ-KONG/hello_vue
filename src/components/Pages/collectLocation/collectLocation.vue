@@ -1,10 +1,28 @@
 <template>
   <div class="dutyList">
-    <div>
+    <div class="arspan">
+      <div class="search">
+        <input
+          ref="input"
+          @click="visible = true"
+          @blur = "visible = false"
+          type="search"
+          v-model="queryName"
+          :placeholder="placeholder"
+          >
+        <mt-button type="primary" v-show="visible"  @click.native="queryCustomer" size="small">
+          搜索
+        </mt-button>
+      </div>
+      <div>
+      <span>{{area}}——{{route}}</span>
+      <mt-button type="primary"  @click.native="openPicker" size="small">
+        路线选择
+      </mt-button>
+      </div>
+    </div>
       <mt-tab-container v-model="active">
         <mt-tab-container-item id="list">
-          <mt-search v-model="value" cancel-text="取消" placeholder="搜索"
-                     show>
             <!--<mt-cell-->
               <!--v-for="item in filterResult"-->
               <!--:title = "item.name"-->
@@ -15,30 +33,52 @@
               <!--<img src="~assets/icon/location.png" width="30" height="30">-->
               <!--</div>-->
             <!--</mt-cell>-->
-            <div  style="margin-top: 10px;padding-right:0;">
-            <mt-cell-swipe
-              v-for="item in filterResult"
-              :title="item.name"
-              :right="rightValue"
-              :key = "item.name"
-            >
-            </mt-cell-swipe>
+          <mt-popup v-model="popupVisible" position="bottom" class="picker">
+            <div class="picker">
+              <mt-picker :slots="slots"
+                         @change="onValuesChange"
+                         value-key="name"
+              ></mt-picker>
             </div>
-          </mt-search>
+          </mt-popup>
+            <!--<div  style="margin-top: 10px;padding-right:0;" v-infinite-scroll="loadMore"-->
+                  <!--:infinite-scroll-disabled=this.loading-->
+                  <!--infinite-scroll-distance="5"-->
+                  <!--infinite-scroll-immediate-check=false-->
+                  <!--&gt;-->
+              <!--:right="rightValue"-->
+            <mt-cell
+              v-for="item in defaultResult"
+              :title="item.customer_desc"
+              :value="item.customer_code"
+              :key = "item.customer_code">
+              <div>
+              <span>定位信息</span>
+              <img src="~assets/icon/location.png" width="30" height="30" @click="showLocation" >
+              </div>
+            </mt-cell>
+            <!--</div>-->
+            <!--<div  v-show="loading">-->
+              <!--<p class="page-infinite-loading">-->
+                <!--<mt-spinner type="fading-circle" color="#26a2ff" :size="40"></mt-spinner>-->
+                <!--正在加载....-->
+              <!--</p>-->
+            <!--</div>-->
         </mt-tab-container-item>
         <mt-tab-container-item id="map">
+          <mt-popup v-model="popupVisibleMap" position="bottom" class="picker">
+            <div class="picker">
+              <mt-picker :slots="slots"
+                         @change="onValuesChange"
+                         value-key="name"
+              ></mt-picker>
+            </div>
+          </mt-popup>
           <div class="mapView">
-          <el-amap vid="amapDemo"
-                   :center="center"
-                   :map-manager="amapManager"
-                   :zoom="zoom"
-                   :plugin="plugin"
-                   :events="events" class="amap-demo">
-          </el-amap>
+            <div id="map-container" style="height:400px"> </div>
           </div>
         </mt-tab-container-item>
       </mt-tab-container>
-    </div>
       <mt-tabbar v-model="active"  fixed>
         <mt-tab-item id="list">
           <img slot ="icon" src="~assets/icon/list_icon.png" height="100" width="120"/>
@@ -69,36 +109,56 @@ import location_icon from "assets/icon/list_icon.png" ;
 const today = new Date();
 
 let amapManager = new VueAMap.AMapManager();
-
+let _this = this;
 export default {
   mounted() {
-    // this.dtkConfigInit();
-    this.getCustomer();
+    this.dtkConfigInit();
+    // this.getCustomer((data)=>this.initList(data));
+    this.getARData((data)=>{
+      this.ARData = data.data;
+      this.slots[0].values = data.data;
+      this.slots[2].values = data.data[0].detailList;
+    });
+    this.init();
   },
   data() {
     return {
+      areaValue:'',
+      routeValue:'',
+      visible:false,
+      placeholder:'搜索',
+      longitude:'',
+      latitude:'',
+      popupVisible:false,
+      popupVisibleMap:false,
+      area:'',
+      route:'',
+      pageSize:15,
+      loading:false,
+      currentPage:-1,
       active: 'list' ,
-      value:'' ,
+      queryName:'' ,
+      ARData:[],
+      slots: [
+        {
+          flex: 1,
+          values: '',
+          className: 'slot1',
+          textAlign: 'right'
+        }, {
+          divider: true,
+          content: '-',
+          className: 'slot2'
+        }, {
+          flex: 1,
+          values:  '',
+          className: 'slot3',
+          textAlign: 'left'
+        }
+      ],
       DTKconfig: [],
       apilist:   [ 'biz.map.locate','device.geolocation.get' ],
-      defaultResult: [
-        {name: '张三',lnglat: [116.405285, 39.904989]} ,
-        {name: 'Banana',lnglat: [116.505285, 39.904989]} ,
-        {name: 'Orange',lnglat: [116.605285, 39.904989]} ,
-        {name: 'Durian',lnglat: [116.705285, 39.904989]} ,
-        {name: 'Lemon',lnglat: [116.805285, 39.904989]} ,
-        {name: 'Peach',lnglat: [116.905285, 39.904989]} ,
-        {name: 'Cherry',lnglat: [116.405285, 39.904989]} ,
-        {name: 'Berry',lnglat: [116.305285, 39.904989]} ,
-        {name: 'Core',lnglat: [116.205285, 39.904989]} ,
-        {name: 'Fig',lnglat: [116.105285, 39.904989]} ,
-        {name: 'Haw',lnglat: [116.605285, 39.804989]} ,
-        {name: 'Melon',lnglat: [116.605285, 39.704989]} ,
-        {name: 'Plum',lnglat: [116.605285, 39.604989]} ,
-        {name: 'Pear',lnglat: [116.605285, 39.504989]} ,
-        {name: 'Peanut',lnglat: [116.605285, 39.404989]} ,
-        {name: 'Other',lnglat: [116.605285, 39.304989]} ,
-      ] ,
+      defaultResult: [] ,
       rightValue:[
         {
           content: '定位',
@@ -110,54 +170,60 @@ export default {
           } ,
         }
       ],
-      //*****************************************高德地图参数start
-      zoom: 12,
-      center: [116.405285, 39.904989],
-      amapManager,
-      events: {
-        init(map) {
-          let style = [{
-            url: 'http://a.amap.com/jsapi_demos/static/images/mass0.png',
-            anchor: new AMap.Pixel(6, 6),
-            size: new AMap.Size(11, 11)
-          },{
-            url: 'http://a.amap.com/jsapi_demos/static/images/mass1.png',
-            anchor: new AMap.Pixel(4, 4),
-            size: new AMap.Size(7, 7)
-          },{
-            url: 'http://a.amap.com/jsapi_demos/static/images/mass2.png',
-            anchor: new AMap.Pixel(200, 200),
-            size: new AMap.Size(5, 5)
-          }
-          ];
-
-          let mass = new AMap.MassMarks(city.city,{
-            opacity:0.8,
-            zIndex: 111,
-            cursor:'pointer',
-            style:style
+      init(){
+        let mapObj = new AMap.Map('map-container', {
+          center: [this.geolocation.longitude, this.geolocation.latitude],
+          zoom: 15
+        });
+        mapObj.plugin(['AMap.ToolBar'], function () {
+          mapObj.addControl(new AMap.ToolBar())
+        });
+        console.log('china',this.geolocation.latitude,this.geolocation.longitude);
+        let lngLat = new AMap.LngLat(this.geolocation.longitude,this.geolocation.latitude);
+        let marker = new AMap.Marker({
+          position: lngLat,
+          map: mapObj,
+          draggable:true,
+        });
+        var circle = new AMap.Circle({
+          center: new AMap.LngLat(this.geolocation.longitude,this.geolocation.latitude),// 圆心位置
+          radius: 200, //半径
+          strokeColor: "#3294ff", //线颜色
+          strokeOpacity: 0.2, //线透明度
+          strokeWeight: 3,    //线宽
+          fillColor: "#1791fc", //填充色
+          fillOpacity: 0.05,//填充透明度
+          // map:mapObj
+        });
+        let oldLnglat = new AMap.LngLat(118.773355,31.974288);
+        let marker2 = new AMap.Marker({
+          position:oldLnglat,
+          icon: new AMap.Icon({
+            size: new AMap.Size(60, 70),  //图标大小
+            image: "http://webapi.amap.com/theme/v1.3/images/newpc/way_btn2.png",
+            imageOffset: new AMap.Pixel(0, -60),
+          }),
+          map:mapObj,
+          draggable:true,
+          raiseOnDrag: true
+        });
+        if(!circle.contains(oldLnglat)){
+          circle.setOptions({
+            fillColor: "#fc0e27", //填充色
+            strokeColor: "#fc0e27", //线颜色
           });
-          let marker = new AMap.Marker({content:' ',map:map})
-          mass.on('mouseover',function(e){
-            marker.setPosition(e.data.lnglat);
-            marker.setLabel({content:e.data.name})
-          })
-          mass.setMap(map);
         }
+
+        circle.setMap(mapObj);
       },
-      plugin: [ 'ToolBar',{
-        pName: 'MapType',
-        defaultType: 0,
-      }],
-      //**********************************************高德地图参数end
     };
   },
-  computed: {
-
-    filterResult() {
-      return this.defaultResult.filter(item => new RegExp(this.value, 'i').test(item.name ));
-    }
-  },
+  // computed: {
+  //
+  //   filterResult() {
+  //     // return this.defaultResult.filter(item => new RegExp(this.value, 'i').test(item.customer_desc ));
+  //   }
+  // },
   methods:{
     dtkConfigInit(){
       authInfo((data) => {
@@ -254,11 +320,96 @@ export default {
       });
     });
     },
-    getCustomer(){
-      axios.get(`${config.serverURL}/Customer`,{
+    showLocation(){
+        this.getLocation((data)=>{
+          this.openMap(data);
+        })
+    },
+    loadMore() {
+      this.loading = true;
+      this.showLoading();
+      setTimeout(() =>{
+        this.getCustomer((data)=>{
+          for (let i = 0; i < data.length; i++) {
+            this.defaultResult.push(data[i]);
+          }
+          // Toast(_this.defaultResult.length);
+          console.log(this.defaultResult);
+          console.log(`数据记录数:${this.defaultResult.length}${this.loading}`);
+          this.loading = false;
+          this.currentPage = this.currentPage+1
+          console.log(`loading状态：${this.loading}`);
+          this.hideLoading();
+        });
+      },2500);
+    },
+    showLoading(){
+      ddTalk.ready(function(){
+      const dd = ddTalk.apis;
+      dd.device.notification.showPreloader({
+        text: "使劲加载中..", //loading显示的字符，空表示不显示文字
+        showIcon: true, //是否显示icon，默认true
+      })
+    })
+    },
+    hideLoading(){
+      ddTalk.ready(function(){
+        const dd = ddTalk.apis;
+        dd.device.notification.hidePreloader({
+        })
+      })
+
+    },
+    getCustomer(callback){
+      axios.get(`${config.neusoftURL}/Customer`,{
         params:{
-          zone:window.location.href.split('#')[0],   //鉴权时，只对#号之前url进行鉴权，服务端验权时只验证#号之前
+          pageSize:this.pageSize,   //分页大小
+          curPage:this.currentPage,// 当前页
+          area:this.areaValue,
+          route:this.routeValue,
+          queryName:this.queryName,
         }
+      }).then((response) => {
+        if (typeof callback === 'function') {
+          callback(response.data)
+        }
+      }).catch(function(err){
+        console.log(err);
+        return err;
+      });
+},
+    queryCustomer(){
+      // Toast(this.queryName);
+      this.loading = true;
+      this.showLoading();
+      setTimeout(() =>{
+        this.getCustomer((data)=>{
+            this.defaultResult=data;
+          console.log(this.defaultResult);
+          console.log(`数据记录数:${this.defaultResult.length}${this.loading}`);
+          this.loading = false;
+          this.currentPage = this.currentPage+1
+          console.log(`loading状态：${this.loading}`);
+          this.hideLoading();
+        });
+      },2500);
+    },
+    onValuesChange(picker, values) {
+      console.log('values[0]',values[0]);
+      console.log('values[1]',values[1]);
+      console.log('typeOf(values[0])',typeof values[0]);
+      if(typeof values[0]!="undefined"){
+        picker.setSlotValues(1, values[0].detailList);
+        this.area=values[0].name;
+        this.areaValue = values[0].id;
+        if(typeof values[1]!="undefined"){
+        this.route = values[1].name;
+        this.routeValue =  values[1].id;
+        }
+      }
+    },
+    getARData(callback){
+      axios.get(`${config.neusoftURL}/getAR`,{
       }).then((response) => {
         if (typeof callback === 'function') {
           callback(response)
@@ -267,8 +418,17 @@ export default {
         console.log(err);
         return err;
       });
-}
-  }
+    },
+    openPicker() {
+      Toast(this.active)
+      if(this.active==='list'){
+        this.popupVisible = true;
+      }else if(this.active==='map'){
+        this.popupVisibleMap = true;
+      }
+    },
+  },
+
 };
 </script>
 
@@ -277,13 +437,48 @@ export default {
 .dutyList{
   /*background-color: #ff2231;*/
   height: 100%;
+  height: 100vh;
   margin: 5px;
   padding: 5px;
   }
 .mapView {
+  /*margin-top: 30px;*/
   background-color: brown;
-  height: 300px;
+  height: 510px;
   padding: 0;
 }
+.arspan{
+  position: relative;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  background-color: #d9d9d9;
+  box-sizing: border-box;
+  /*display: -webkit-box;*/
+  /*display: -ms-flexbox;*/
+  /*display: flex;*/
+  padding: 8px 10px;
+  z-index: 1;
+}
+.picker{
+  width:100%;
+}
+.search{
+  display: flex;
+  align-content: center;
+  align-items: stretch;
+  height:30px;
+  width:100%;
+}
+.page-infinite-loading{
+  background-color: grey;
+  position: fixed;
+  bottom: 50%;
+  display: flex;
+  justify-content:center;
+  align-items: center;
+  width: 50%;
+
+  }
 
 </style>
