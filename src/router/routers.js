@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import Router from 'vue-router';
 import HomePages from '../components/Pages/home/homePage';
-import HelloWorld from '../components/HelloWorld';
+import HelloWorld from '../components/test1';
 import dutyList from '../components/Pages/duty/dutyList';
 import customerList from '../components/Pages/collectLocation/collectLocation';
 

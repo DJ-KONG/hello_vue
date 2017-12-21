@@ -108,7 +108,7 @@
           map: mapObj,
           draggable:true,
         });
-        var circle = new AMap.Circle({
+        let circle = new AMap.Circle({
           center: new AMap.LngLat(this.geolocation.longitude,this.geolocation.latitude),// 圆心位置
           radius: 200, //半径
           strokeColor: "#3294ff", //线颜色
