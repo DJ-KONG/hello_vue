@@ -22,13 +22,12 @@
 
 <script>
 
-  import neusoftInit from '@/components/dingTalk/packages/init';
-  import neusoftApis from '@/components/dingTalk/packages/apis';
   import config from '@/config';
-  import ddTalk from 'dingtalk-javascript-sdk' ;
-
+  import neuTalk from 'neusoft-dingtalk' ;
   const url = `${config.neusoftURL}/getConfig`;
   const apiList =[ 'biz.map.locate','device.geolocation.get' ];
+  const neusoftInit = neuTalk.init;
+  const neusoftApis = neuTalk.apis;
 
   export default {
     name: 'HelloWorld',
@@ -39,11 +38,9 @@
       };
     },
     mounted(){
-      neusoftInit.method.authInfo(url,(data)=>{
-        neusoftInit.method.getConfig(data,this.apiList,(h)=>{
-           neusoftApis.method.neusoftSetNavTitle('组件封装测试',(result)=>{},(error)=>{});
-        })
-      })
+           neusoftApis.navSetTitle.setTitle('组件封装测试',(result)=>{},(error)=>{});
+           neusoftApis.geoLocation.getLocation(url,{targetAccuracy:200,coordinate:1,withReGeocode:false,useCache:true},
+            (data)=>{console.log('哈哈哈',JSON.stringify(data));},(data)=>{});
     }
   };
 </script>

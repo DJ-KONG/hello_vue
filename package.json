@@ -19,6 +19,7 @@
     "element": "^0.1.4",
     "element-ui": "^2.0.3",
     "mint-ui": "^2.2.10",
+    "neusoft-dingtalk": "0.0.8",
     "vue": "^2.5.3",
     "vue-amap": "^0.4.1",
     "vue-router": "^3.0.1"

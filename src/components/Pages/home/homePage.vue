@@ -22,7 +22,9 @@
 //import leiFT from 'assets/pic/lft.jpg';
 import xiHu from 'assets/pic/xihu.jpg';
 import logo from 'assets/logo.png';
-import ddTalk from 'dingtalk-javascript-sdk';
+import neuTalk from 'neusoft-dingtalk' ;
+
+const neusoftApis = neuTalk.apis;
 
 export default {
   name: 'HelloWorld',
@@ -47,19 +49,13 @@ export default {
         {
           icon: 'radio.png',
           name: '电台',
-          route: 'HelloWorld',
+          route: 'detailMapView',
         },
       ],
     };
   },
   mounted() {
-//    ddTalk.ready(function(){
-//      const dd = ddTalk.apis;
-//      // 设置导航
-//      dd.biz.navigation.setTitle({
-//        title: '物流作业'
-//      });
-//    });
+    neusoftApis.navSetTitle.setTitle('烟草物流工作平台',(result)=>{},(error)=>{});
   },
 };
 </script>

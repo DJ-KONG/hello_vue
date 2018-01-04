@@ -22,7 +22,6 @@
       <!--</p>-->
 
     <!--</div>-->
-    <mt-button type="primary"  @click.native="handleClick">primary</mt-button>
     <!--<mt-search v-model="value" cancel-text="取消" placeholder="搜索"-->
                <!--show></mt-search>-->
     <!--<el-amap vid="amapDemo"-->
@@ -68,7 +67,7 @@
     mounted() {
       this.dtkConfigInit();
       this.getLocation((data)=>{this.geolocation=data;this.init();});
-
+      this.init();
       // this.getARData((data)=>{
       //   this.ARData = data.data;
       //   console.log('json文件',arJson);
